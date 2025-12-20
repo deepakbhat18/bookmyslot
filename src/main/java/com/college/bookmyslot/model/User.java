@@ -27,12 +27,11 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
-    // ===== OTP for email verification =====
+  
     private String otp;
     private LocalDateTime otpExpiry;
     private boolean verified = false;
 
-    // ===== OTP for password reset =====
     private String resetOtp;
     private LocalDateTime resetOtpExpiry;
 
@@ -41,9 +40,6 @@ public class User {
         TEACHER,
         ADMIN
     }
-
-    // getters & setters
-
     public Long getId() { return id; }
 
     public void setId(Long id) { this.id = id; }
