@@ -15,6 +15,7 @@ public interface EventBookingRepository extends JpaRepository<EventBooking, Long
     List<EventBooking> findByStudent(User student);
 
     Optional<EventBooking> findByEventAndStudent(Event event, User student);
+
     Optional<EventBooking> findByTicketId(String ticketId);
 
     long countByEvent(Event event);

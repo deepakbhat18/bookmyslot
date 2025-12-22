@@ -1,8 +1,6 @@
 package com.college.bookmyslot.controller;
 
-import com.college.bookmyslot.dto.ApiResponse;
-import com.college.bookmyslot.dto.LoginRequest;
-import com.college.bookmyslot.dto.RegisterRequest;
+import com.college.bookmyslot.dto.*;
 import com.college.bookmyslot.model.Club;
 import com.college.bookmyslot.model.User;
 import com.college.bookmyslot.repository.ClubRepository;
@@ -103,17 +101,16 @@ public class AuthController {
 
     @PostMapping("/verify-otp")
     public ApiResponse<String> verifyOtp(
-            @RequestParam String email,
-            @RequestParam String otp
+            @RequestBody OtpVerifyRequest request
     ) {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (user.isVerified()) {
             return new ApiResponse<>(true, "Already verified", null);
         }
 
-        if (!otp.equals(user.getOtp()) ||
+        if (!request.getOtp().equals(user.getOtp()) ||
                 user.getOtpExpiry().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("Invalid or expired OTP");
         }
@@ -126,6 +123,37 @@ public class AuthController {
         return new ApiResponse<>(
                 true,
                 "Email verified successfully",
+                null
+        );
+    }
+
+    @PostMapping("/resend-otp")
+    public ApiResponse<String> resendOtp(
+            @RequestBody ResendOtpRequest request
+    ) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.isVerified()) {
+            return new ApiResponse<>(true, "User already verified", null);
+        }
+
+        String otp = String.valueOf(100000 + new Random().nextInt(900000));
+
+        user.setOtp(otp);
+        user.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
+        userRepository.save(user);
+
+        emailService.sendOtpEmail(
+                user.getEmail(),
+                user.getName(),
+                otp,
+                "Email Verification"
+        );
+
+        return new ApiResponse<>(
+                true,
+                "New OTP sent to your email",
                 null
         );
     }

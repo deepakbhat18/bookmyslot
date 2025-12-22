@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+
+
 @Service
 public class EventBookingService {
 
@@ -72,18 +74,16 @@ public class EventBookingService {
         EventBooking booking = eventBookingRepository.findByTicketId(ticketId)
                 .orElseThrow(() -> new RuntimeException("Invalid ticket"));
 
-
         User staff = userRepository.findById(staffUserId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
 
         if (staff.getRole() != User.Role.CLUB) {
             throw new RuntimeException("Only club staff can check-in tickets");
         }
 
-
         Club eventClub = booking.getEvent().getClub();
-        if (staff.getClub() == null || !staff.getClub().getId().equals(eventClub.getId())) {
+        if (staff.getClub() == null ||
+                !staff.getClub().getId().equals(eventClub.getId())) {
             throw new RuntimeException("You are not authorized to check-in this event");
         }
 
@@ -96,6 +96,7 @@ public class EventBookingService {
 
         eventBookingRepository.save(booking);
     }
+
 
 
     private EventBookingResponse mapToResponse(EventBooking booking) {

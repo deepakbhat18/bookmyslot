@@ -1,14 +1,22 @@
+
 package com.college.bookmyslot.dto;
 
 import lombok.Data;
+import java.time.LocalDateTime;
 
-@Data
-public class EventCheckInResponse {
-    private boolean success;
-    private String message;
-    private String studentName;
-    private String eventTitle;
-    private String checkInTime;
-    private String ticketId;
-    private boolean checkedIn ;
-}
+    @Data
+    public class EventCheckInResponse {
+
+        private String ticketId;
+        private String studentName;
+        private String eventTitle;
+
+        private boolean checkedIn;
+        private LocalDateTime checkInTime;
+
+        public void setMessage(String entryAllowed) {
+
+        }
+    }
+
+

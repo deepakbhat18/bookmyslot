@@ -2,6 +2,7 @@ package com.college.bookmyslot.service;
 
 import com.college.bookmyslot.dto.EventCheckInRequest;
 import com.college.bookmyslot.dto.EventCheckInResponse;
+import com.college.bookmyslot.model.Club;
 import com.college.bookmyslot.model.EventBooking;
 import com.college.bookmyslot.model.User;
 import com.college.bookmyslot.repository.EventBookingRepository;
@@ -24,20 +25,25 @@ public class EventCheckInService {
 
     public EventCheckInResponse checkIn(EventCheckInRequest request) {
 
-        User staff = userRepository.findById(request.getStaffUserId())
-                .orElseThrow(() -> new RuntimeException("Staff user not found"));
-
-        if (staff.getRole() != User.Role.CLUB) {
-            throw new RuntimeException("Only club staff can check in tickets");
-        }
-
         EventBooking booking = bookingRepository.findByTicketId(request.getTicketId())
                 .orElseThrow(() -> new RuntimeException("Invalid ticket"));
 
-        if (booking.isCheckedIn()) {
-            throw new RuntimeException("Ticket already checked in");
+        User staff = userRepository.findById(request.getStaffUserId())
+                .orElseThrow(() -> new RuntimeException("Staff not found"));
+
+        if (staff.getRole() != User.Role.CLUB) {
+            throw new RuntimeException("Only club staff can check-in");
         }
 
+        Club eventClub = booking.getEvent().getClub();
+        if (staff.getClub() == null ||
+                !staff.getClub().getId().equals(eventClub.getId())) {
+            throw new RuntimeException("Unauthorized staff");
+        }
+
+        if (booking.isCheckedIn()) {
+            throw new RuntimeException("Ticket already checked-in");
+        }
 
         booking.setCheckedIn(true);
         booking.setCheckedInAt(LocalDateTime.now());
@@ -48,7 +54,7 @@ public class EventCheckInService {
         response.setStudentName(booking.getStudent().getName());
         response.setEventTitle(booking.getEvent().getTitle());
         response.setCheckedIn(true);
-        response.setMessage("Entry allowed");
+        response.setCheckInTime(booking.getCheckedInAt());
 
         return response;
     }
