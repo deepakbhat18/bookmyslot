@@ -15,6 +15,7 @@ public class EventListResponse {
     private double price;
 
     private int availableSeats;
+    private String posterUrl;
 
 
 }

@@ -13,7 +13,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     List<Event> findByClub(Club club);
     List<Event> findByStatusOrderByEventDateAsc(Event.Status status);
 
-
     List<Event> findByEventDate(LocalDate eventDate);
 
 

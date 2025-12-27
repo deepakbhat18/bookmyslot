@@ -143,6 +143,7 @@ public class EventService {
         r.setTotalSeats(event.getTotalSlots());
         r.setAvailableSeats(event.getTotalSlots() - event.getBookedSlots());
         r.setClubName(event.getClub().getName());
+       r.setPosterUrl(event.getPosterUrl());
 
         return r;
     }
@@ -158,7 +159,7 @@ public class EventService {
         r.setPaid(event.getEventType() == Event.EventType.PAID);
         r.setPrice(event.getTicketPrice());
         r.setAvailableSeats(event.getTotalSlots() - event.getBookedSlots());
-
+        r.setPosterUrl(event.getPosterUrl());
         return r;
     }
     public EventResponse getEventDetails(Long eventId) {
