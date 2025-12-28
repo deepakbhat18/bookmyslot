@@ -27,6 +27,7 @@ public class EventBooking {
 
     private boolean paid;
     private double amountPaid;
+    private boolean reminderSent = false;
 
 
     @Column(nullable = false)

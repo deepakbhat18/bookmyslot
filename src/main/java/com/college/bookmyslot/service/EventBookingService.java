@@ -39,7 +39,7 @@ public class EventBookingService {
         this.emailService = emailService;
     }
 
-    // ================= FREE EVENT BOOKING =================
+
     public EventBookingResponse bookEvent(EventBookingRequest request) {
 
         Event event = eventRepository.findById(request.getEventId())
@@ -55,12 +55,12 @@ public class EventBookingService {
         return createBooking(event, student, false);
     }
 
-    // ================= PAID EVENT (AFTER PAYMENT) =================
+
     public EventBookingResponse bookEventAfterPayment(Event event, User student) {
         return createBooking(event, student, true);
     }
 
-    // ================= COMMON BOOKING LOGIC =================
+
     private EventBookingResponse createBooking(Event event, User student, boolean paid) {
 
         if (event.getBookedSlots() >= event.getTotalSlots()) {
@@ -84,16 +84,15 @@ public class EventBookingService {
         event.setBookedSlots(event.getBookedSlots() + 1);
         eventRepository.save(event);
 
-        // 📧 Email to student
+
         sendBookingEmail(student, event, booking);
 
-        // 📧 Email to club
+
         sendBookingEmailToClub(event, booking);
 
         return mapToResponse(booking);
     }
 
-    // ================= CHECK-IN =================
     public void checkInTicket(String ticketId, Long staffUserId) {
 
         EventBooking booking = eventBookingRepository.findByTicketId(ticketId)
@@ -121,7 +120,6 @@ public class EventBookingService {
         eventBookingRepository.save(booking);
     }
 
-    // ================= EMAIL HELPERS =================
     private void sendBookingEmail(User student, Event event, EventBooking booking) {
         try {
             emailService.sendEventBookingEmail(
@@ -154,7 +152,6 @@ public class EventBookingService {
         }
     }
 
-    // ================= RESPONSE MAPPER =================
     public EventBookingResponse mapToResponse(EventBooking booking) {
 
         Event event = booking.getEvent();

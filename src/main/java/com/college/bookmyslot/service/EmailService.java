@@ -144,5 +144,28 @@ public class EmailService {
 
         mailSender.send(message);
     }
+    public void sendEventReminderEmail(
+            String to,
+            String studentName,
+            String eventTitle,
+            String venue,
+            String startTime
+    ) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("⏰ Reminder: Event starts in 15 minutes");
+
+        message.setText(
+                "Hi " + studentName + ",\n\n" +
+                        "This is a reminder that your event \"" + eventTitle + "\"\n" +
+                        "will start at " + startTime + ".\n\n" +
+                        "Venue: " + venue + "\n\n" +
+                        "Please bring your QR ticket for check-in.\n\n" +
+                        "— BookMySlot Team"
+        );
+
+        mailSender.send(message);
+    }
+
 
 }
