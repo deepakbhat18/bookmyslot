@@ -25,19 +25,29 @@ public class EventReminderScheduler {
         this.emailService = emailService;
     }
 
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(fixedRate = 30000)
     public void sendEventReminders() {
+        System.out.println("🔔 Reminder scheduler triggered");
+//        LocalDateTime now = LocalDateTime.now();
+//        LocalDateTime reminderTime = now.plusMinutes(5);
+//
+//        LocalDate date = reminderTime.toLocalDate();
+//        LocalTime start = reminderTime.minusMinutes(1).toLocalTime();
+//        LocalTime end = reminderTime.plusMinutes(1).toLocalTime();
 
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime reminderTime = now.plusMinutes(15);
-
-        LocalDate date = reminderTime.toLocalDate();
-        LocalTime start = reminderTime.minusMinutes(1).toLocalTime();
-        LocalTime end = reminderTime.plusMinutes(1).toLocalTime();
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now();
+        LocalTime plus1Hour = now.plusHours(1);
+        System.out.println("Today: " + today);
+        System.out.println("Now: " + now);
+        System.out.println("Until: " + plus1Hour);
+//        List<EventBooking> bookings =
+//                bookingRepository.findUpcomingBookings(date, start, end);
 
         List<EventBooking> bookings =
-                bookingRepository.findUpcomingBookingsForReminder(date, start, end);
+                bookingRepository.findUpcomingBookings(today, now, plus1Hour);
 
+        System.out.println("Bookings found: " + bookings.size());
         for (EventBooking booking : bookings) {
 
             emailService.sendEventReminderEmail(

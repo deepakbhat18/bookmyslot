@@ -24,14 +24,16 @@ public interface EventBookingRepository extends JpaRepository<EventBooking, Long
 
     long countByEvent(Event event);
     @Query("""
-        SELECT b FROM EventBooking b
-        WHERE b.event.eventDate = :date
-        AND b.event.startTime BETWEEN :startTime AND :endTime
-        AND b.reminderSent = false
-    """)
-    List<EventBooking> findUpcomingBookingsForReminder(
+SELECT eb FROM EventBooking eb
+JOIN eb.event e
+WHERE e.eventDate = :date
+AND e.startTime BETWEEN :from AND :to
+AND eb.reminderSent = false
+""")
+    List<EventBooking> findUpcomingBookings(
             @Param("date") LocalDate date,
-            @Param("startTime") LocalTime startTime,
-            @Param("endTime") LocalTime endTime
+            @Param("from") LocalTime from,
+            @Param("to") LocalTime to
     );
+
 }

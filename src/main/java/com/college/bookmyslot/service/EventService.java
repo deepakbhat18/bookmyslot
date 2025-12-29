@@ -13,6 +13,7 @@ import com.college.bookmyslot.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -76,11 +77,21 @@ public class EventService {
             event.setEventType(Event.EventType.FREE);
             event.setTicketPrice(0.0);
         }
-
+        event.setEventDateTime(
+                LocalDateTime.of(
+                        event.getEventDate(),
+                        event.getStartTime()
+                )
+        );
+        event.setEventDateTime(
+                LocalDateTime.of(
+                        event.getEventDate(),
+                        event.getStartTime()
+                )
+        );
         Event saved = eventRepository.save(event);
         return mapToEventResponse(saved);
     }
-
 
     public EventResponse updateEvent(Long eventId, EventUpdateRequest request) {
 

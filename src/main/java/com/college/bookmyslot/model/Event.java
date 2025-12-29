@@ -45,6 +45,15 @@ public class Event {
 
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt;
+    private LocalDateTime eventDateTime;
+
+    public LocalDateTime getEventDateTime() {
+        return eventDateTime;
+    }
+
+    public void setEventDateTime(LocalDateTime eventDateTime) {
+        this.eventDateTime = eventDateTime;
+    }
 
     public enum EventType {
         FREE,
@@ -106,4 +115,6 @@ public class Event {
         this.status = status;
         this.updatedAt = LocalDateTime.now();
     }
+
+
 }

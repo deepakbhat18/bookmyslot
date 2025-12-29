@@ -12,8 +12,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.nio.file.*;
 
-
-
 @RestController
 @RequestMapping("/api/events")
 @CrossOrigin(origins = "*")
