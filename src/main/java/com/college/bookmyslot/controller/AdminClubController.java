@@ -1,5 +1,9 @@
 package com.college.bookmyslot.controller;
 
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+
 import com.college.bookmyslot.dto.ApiResponse;
 import com.college.bookmyslot.dto.ClubCreateRequest;
 import com.college.bookmyslot.dto.ClubStaffCreateRequest;
@@ -137,5 +141,3 @@ public class AdminClubController {
                 .toList();
     }
 }
-
-

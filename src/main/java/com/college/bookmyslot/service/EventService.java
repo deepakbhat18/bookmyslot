@@ -31,67 +31,100 @@ public class EventService {
         this.userRepository=userRepository;
     }
 
-    public EventResponse createEventByStaff(Long staffUserId, EventCreateRequest request) {
+//    public EventResponse createEventByStaff(Long staffUserId, EventCreateRequest request) {
+//
+//        User staff = userRepository.findById(staffUserId)
+//                .orElseThrow(() -> new RuntimeException("User not found"));
+//
+//        if (staff.getRole() != User.Role.CLUB) {
+//            throw new RuntimeException("Only club staff can create events");
+//        }
+//
+//        if (staff.getClub() == null) {
+//            throw new RuntimeException("Club staff is not linked to any club");
+//        }
+//
+//        Club club = staff.getClub();
+//
+//        if (club.getStatus() != Club.Status.ACTIVE) {
+//            throw new RuntimeException("Club is inactive. Cannot create events.");
+//        }
+//
+//        LocalTime start = LocalTime.parse(request.getStartTime());
+//        LocalTime end = LocalTime.parse(request.getEndTime());
+//
+//        if (!start.isBefore(end)) {
+//            throw new RuntimeException("Start time must be before end time");
+//        }
+//
+//        Event event = new Event();
+//        event.setClub(club);
+//        event.setTitle(request.getTitle());
+//        event.setDescription(request.getDescription());
+//        event.setVenue(request.getVenue());
+//        event.setEventDate(LocalDate.parse(request.getEventDate()));
+//        event.setStartTime(start);
+//        event.setEndTime(end);
+//        event.setTotalSlots(request.getMaxSeats());
+//        event.setBookedSlots(0);
+//        event.setStatus(Event.Status.DRAFT);
+//
+//
+//        if (request.isPaid()) {
+//            event.setEventType(Event.EventType.PAID);
+//            event.setTicketPrice(request.getPrice());
+//        } else {
+//            event.setEventType(Event.EventType.FREE);
+//            event.setTicketPrice(0.0);
+//        }
+//        event.setEventDateTime(
+//                LocalDateTime.of(
+//                        event.getEventDate(),
+//                        event.getStartTime()
+//                )
+//        );
+//        event.setEventDateTime(
+//                LocalDateTime.of(
+//                        event.getEventDate(),
+//                        event.getStartTime()
+//                )
+//        );
+//        Event saved = eventRepository.save(event);
+//        return mapToEventResponse(saved);
+//    }
+public EventResponse createEventByStaff(
+        Long staffUserId,
+        EventCreateRequest request
+) {
+    User staff = userRepository.findById(staffUserId)
+            .orElseThrow(() -> new RuntimeException("Staff not found"));
 
-        User staff = userRepository.findById(staffUserId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        if (staff.getRole() != User.Role.CLUB) {
-            throw new RuntimeException("Only club staff can create events");
-        }
-
-        if (staff.getClub() == null) {
-            throw new RuntimeException("Club staff is not linked to any club");
-        }
-
-        Club club = staff.getClub();
-
-        if (club.getStatus() != Club.Status.ACTIVE) {
-            throw new RuntimeException("Club is inactive. Cannot create events.");
-        }
-
-        LocalTime start = LocalTime.parse(request.getStartTime());
-        LocalTime end = LocalTime.parse(request.getEndTime());
-
-        if (!start.isBefore(end)) {
-            throw new RuntimeException("Start time must be before end time");
-        }
-
-        Event event = new Event();
-        event.setClub(club);
-        event.setTitle(request.getTitle());
-        event.setDescription(request.getDescription());
-        event.setVenue(request.getVenue());
-        event.setEventDate(LocalDate.parse(request.getEventDate()));
-        event.setStartTime(start);
-        event.setEndTime(end);
-        event.setTotalSlots(request.getMaxSeats());
-        event.setBookedSlots(0);
-        event.setStatus(Event.Status.DRAFT);
-
-
-        if (request.isPaid()) {
-            event.setEventType(Event.EventType.PAID);
-            event.setTicketPrice(request.getPrice());
-        } else {
-            event.setEventType(Event.EventType.FREE);
-            event.setTicketPrice(0.0);
-        }
-        event.setEventDateTime(
-                LocalDateTime.of(
-                        event.getEventDate(),
-                        event.getStartTime()
-                )
-        );
-        event.setEventDateTime(
-                LocalDateTime.of(
-                        event.getEventDate(),
-                        event.getStartTime()
-                )
-        );
-        Event saved = eventRepository.save(event);
-        return mapToEventResponse(saved);
+    if (staff.getRole() != User.Role.CLUB) {
+        throw new RuntimeException("Only club staff can create events");
     }
+
+    Event event = new Event();
+    event.setClub(staff.getClub());
+    event.setTitle(request.getTitle());
+    event.setDescription(request.getDescription());
+    event.setVenue(request.getVenue());
+    event.setEventDate(LocalDate.parse(request.getEventDate()));
+    event.setStartTime(LocalTime.parse(request.getStartTime()));
+    event.setEndTime(LocalTime.parse(request.getEndTime()));
+    event.setTotalSlots(request.getMaxSeats());
+    event.setBookedSlots(0);
+
+    if (request.isPaid()) {
+        event.setEventType(Event.EventType.PAID);
+        event.setTicketPrice(request.getPrice());
+    } else {
+        event.setEventType(Event.EventType.FREE);
+        event.setTicketPrice(0.0);
+    }
+
+    eventRepository.save(event);
+    return mapToEventResponse(event);
+}
 
     public EventResponse updateEvent(Long eventId, EventUpdateRequest request) {
 

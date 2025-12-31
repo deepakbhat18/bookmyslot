@@ -18,4 +18,5 @@ public class EventCreateRequest {
     private double price;
 
     private int maxSeats;
+
 }

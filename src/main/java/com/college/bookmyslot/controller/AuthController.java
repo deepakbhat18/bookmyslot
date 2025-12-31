@@ -1,7 +1,7 @@
+
 package com.college.bookmyslot.controller;
 
 import com.college.bookmyslot.dto.*;
-import com.college.bookmyslot.model.Club;
 import com.college.bookmyslot.model.User;
 import com.college.bookmyslot.repository.ClubRepository;
 import com.college.bookmyslot.repository.UserRepository;
@@ -30,7 +30,6 @@ public class AuthController {
         this.emailService = emailService;
     }
 
-
     @PostMapping("/register")
     public ApiResponse<String> register(@RequestBody RegisterRequest request) {
 
@@ -42,11 +41,8 @@ public class AuthController {
         try {
             role = User.Role.valueOf(request.getRole().toUpperCase());
         } catch (Exception e) {
-            throw new RuntimeException(
-                    "Invalid role. Use STUDENT or TEACHER"
-            );
+            throw new RuntimeException("Invalid role. Use STUDENT or TEACHER");
         }
-
 
         if (role == User.Role.CLUB || role == User.Role.ADMIN) {
             throw new RuntimeException(
@@ -91,10 +87,10 @@ public class AuthController {
                 null
         );
     }
- @PostMapping("/verify-otp")
-    public ApiResponse<String> verifyOtp(
-            @RequestBody OtpVerifyRequest request
-    ) {
+
+    @PostMapping("/verify-otp")
+    public ApiResponse<String> verifyOtp(@RequestBody OtpVerifyRequest request) {
+
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -102,8 +98,8 @@ public class AuthController {
             return new ApiResponse<>(true, "Already verified", null);
         }
 
-        if (!request.getOtp().equals(user.getOtp()) ||
-                user.getOtpExpiry().isBefore(LocalDateTime.now())) {
+        if (!request.getOtp().equals(user.getOtp())
+                || user.getOtpExpiry().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("Invalid or expired OTP");
         }
 
@@ -118,10 +114,10 @@ public class AuthController {
                 null
         );
     }
+
     @PostMapping("/resend-otp")
-    public ApiResponse<String> resendOtp(
-            @RequestBody ResendOtpRequest request
-    ) {
+    public ApiResponse<String> resendOtp(@RequestBody ResendOtpRequest request) {
+
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -130,7 +126,6 @@ public class AuthController {
         }
 
         String otp = String.valueOf(100000 + new Random().nextInt(900000));
-
         user.setOtp(otp);
         user.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
         userRepository.save(user);
@@ -148,8 +143,9 @@ public class AuthController {
                 null
         );
     }
+
     @PostMapping("/login")
-    public ApiResponse<Object> login(@RequestBody LoginRequest request) {
+    public ApiResponse<LoginResponse> login(@RequestBody LoginRequest request) {
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Invalid credentials"));
@@ -161,18 +157,31 @@ public class AuthController {
         if (!user.isVerified()) {
             throw new RuntimeException("Email not verified");
         }
+
+        LoginResponse response = new LoginResponse();
+        response.setUserId(user.getId());
+        response.setName(user.getName());
+        response.setEmail(user.getEmail());
+        response.setRole(user.getRole().name());
+        response.setUsn(user.getUsn());
+        response.setClubId(
+                user.getClub() != null ? user.getClub().getId() : null
+        );
+
         return new ApiResponse<>(
                 true,
                 "Login successful",
-                new Object() {
-                    public final Long userId = user.getId();
-                    public final String name = user.getName();
-                    public final String email = user.getEmail();
-                    public final String role = user.getRole().name();
-                    public final String usn = user.getUsn();
-                    public final Long clubId =
-                            user.getClub() != null ? user.getClub().getId() : null;
-                }
+                response
         );
+    }
+
+    @PutMapping("/users/{id}/deactivate")
+    public void deactivateUser(@PathVariable Long id) {
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setActive(false);
+        userRepository.save(user);
     }
 }

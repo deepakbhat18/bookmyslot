@@ -2,14 +2,16 @@ package com.college.bookmyslot.controller;
 
 import com.college.bookmyslot.dto.BookSlotRequest;
 import com.college.bookmyslot.dto.CreateSlotRequest;
-import com.college.bookmyslot.model.*;
-import com.college.bookmyslot.repository.*;
-import com.college.bookmyslot.service.EmailService;
-import jakarta.transaction.Transactional;
+import com.college.bookmyslot.model.SlotBooking;
+import com.college.bookmyslot.model.TeacherSlot;
+import com.college.bookmyslot.model.User;
+import com.college.bookmyslot.repository.SlotBookingRepository;
+import com.college.bookmyslot.repository.TeacherSlotRepository;
+import com.college.bookmyslot.repository.UserRepository;
+import com.college.bookmyslot.service.SlotBookingService;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -21,20 +23,20 @@ public class SlotController {
     private final TeacherSlotRepository slotRepository;
     private final SlotBookingRepository bookingRepository;
     private final UserRepository userRepository;
-    private final EventBookingRepository eventBookingRepository;
-    private final EmailService emailService;
+    private final SlotBookingService slotBookingService;
 
-    public SlotController(TeacherSlotRepository slotRepository,
-                          SlotBookingRepository bookingRepository,
-                          UserRepository userRepository,
-                          EventBookingRepository eventBookingRepository,
-                          EmailService emailService) {
+    public SlotController(
+            TeacherSlotRepository slotRepository,
+            SlotBookingRepository bookingRepository,
+            UserRepository userRepository,
+            SlotBookingService slotBookingService
+    ) {
         this.slotRepository = slotRepository;
         this.bookingRepository = bookingRepository;
         this.userRepository = userRepository;
-        this.eventBookingRepository=eventBookingRepository;
-        this.emailService = emailService;
+        this.slotBookingService = slotBookingService;
     }
+
     @PostMapping("/create")
     public TeacherSlot createSlot(@RequestBody CreateSlotRequest request) {
 
@@ -54,95 +56,25 @@ public class SlotController {
 
         return slotRepository.save(slot);
     }
+
     @GetMapping("/available")
     public List<TeacherSlot> getAvailableSlots(@RequestParam String date) {
         LocalDate d = LocalDate.parse(date);
         return slotRepository.findByDateAndStatus(d, TeacherSlot.Status.AVAILABLE);
     }
-    @Transactional
+
     @PostMapping("/book")
     public SlotBooking bookSlot(@RequestBody BookSlotRequest request) {
-
-        TeacherSlot slot = slotRepository.findByIdForUpdate(request.getSlotId())
-                .orElseThrow(() -> new RuntimeException("Slot not found"));
-
-        if (slot.getStatus() != TeacherSlot.Status.AVAILABLE) {
-            throw new RuntimeException("Slot is not available");
-        }
-        User student = userRepository.findById(request.getStudentId())
-                .orElseThrow(() -> new RuntimeException("Student not found"));
-
-        if (slot.getStatus() != TeacherSlot.Status.AVAILABLE) {
-            throw new RuntimeException("Slot is not available");
-        }
-
-        boolean slotConflict =
-                bookingRepository.existsOverlappingSlotBooking(
-                        student,
-                        slot.getDate(),
-                        slot.getStartTime(),
-                        slot.getEndTime()
-                );
-
-        boolean eventConflict =
-                eventBookingRepository.existsOverlappingEventBooking(
-                        student,
-                        slot.getDate(),
-                        slot.getStartTime(),
-                        slot.getEndTime()
-                );
-
-        if (slotConflict || eventConflict) {
-            throw new RuntimeException(
-                    "You already have a booking during this time"
-            );
-        }
-
-        SlotBooking booking = new SlotBooking();
-        booking.setSlot(slot);
-        booking.setStudent(student);
-        booking.setBookedAt(LocalDateTime.now());
-        booking.setStatus(SlotBooking.Status.BOOKED);
-
-        slot.setStatus(TeacherSlot.Status.BOOKED);
-        slotRepository.save(slot);
-
-        SlotBooking saved = bookingRepository.save(booking);
-
-        try {
-            emailService.sendSlotBookingEmail(
-                    student.getEmail(),
-                    student.getName(),
-                    slot.getTeacher().getName(),
-                    slot.getDate().toString(),
-                    slot.getStartTime().toString(),
-                    slot.getEndTime().toString()
-            );
-        } catch (Exception e) {
-            System.err.println("Failed to send slot booking email to student: " + e.getMessage());
-        }
-        try {
-            emailService.sendTeacherSlotBookedEmail(
-                    slot.getTeacher().getEmail(),
-                    slot.getTeacher().getName(),
-                    student.getName(),
-                    student.getEmail(),
-                    student.getUsn(),
-                    slot.getDate().toString(),
-                    slot.getStartTime().toString(),
-                    slot.getEndTime().toString()
-            );
-        } catch (Exception e) {
-            System.err.println("Failed to send slot booking email to teacher: " + e.getMessage());
-        }
-        return saved;
+        return slotBookingService.bookSlot(request);
     }
+
     @GetMapping("/student/{studentId}")
     public List<SlotBooking> getStudentBookings(@PathVariable Long studentId) {
         User student = userRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
         return bookingRepository.findByStudent(student);
     }
+
     @GetMapping("/teacher/{teacherId}")
     public List<SlotBooking> getTeacherBookings(@PathVariable Long teacherId) {
         User teacher = userRepository.findById(teacherId)

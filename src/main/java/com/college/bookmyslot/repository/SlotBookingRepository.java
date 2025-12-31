@@ -40,5 +40,4 @@ WHERE sb.student = :student
             @Param("endTime") LocalTime endTime
     );
 
-
 }

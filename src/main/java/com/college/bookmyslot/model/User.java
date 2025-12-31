@@ -47,4 +47,7 @@ public class User {
         CLUB,
         ADMIN
     }
+    @Column(nullable = false)
+    private boolean active = true;
+
 }
