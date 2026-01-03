@@ -181,4 +181,57 @@ public ApiResponse<String> verifyOtp(@RequestBody OtpVerifyRequest request) {
         user.setActive(false);
         userRepository.save(user);
     }
+    @PostMapping("/forgot-password")
+    public ApiResponse<String> forgotPassword(
+            @RequestBody ForgotPasswordRequest request
+    ) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String otp = String.valueOf(100000 + new Random().nextInt(900000));
+
+        user.setResetOtp(otp);
+        user.setResetOtpExpiry(LocalDateTime.now().plusMinutes(10));
+        userRepository.save(user);
+
+        emailService.sendOtpEmail(
+                user.getEmail(),
+                user.getName(),
+                otp,
+                "Password Reset"
+        );
+
+        return new ApiResponse<>(
+                true,
+                "Password reset OTP sent to email",
+                null
+        );
+    }
+    @PostMapping("/reset-password")
+    public ApiResponse<String> resetPassword(
+            @RequestBody ResetPasswordRequest request
+    ) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getResetOtp() == null ||
+                !user.getResetOtp().equals(request.getOtp()) ||
+                user.getResetOtpExpiry().isBefore(LocalDateTime.now())) {
+
+            throw new RuntimeException("Invalid or expired OTP");
+        }
+
+        user.setPassword(request.getNewPassword());
+        user.setResetOtp(null);
+        user.setResetOtpExpiry(null);
+
+        userRepository.save(user);
+
+        return new ApiResponse<>(
+                true,
+                "Password reset successful",
+                null
+        );
+    }
+
 }
