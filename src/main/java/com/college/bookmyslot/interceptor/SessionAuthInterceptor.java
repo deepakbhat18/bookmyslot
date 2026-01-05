@@ -5,7 +5,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
-
 @Component
 public class SessionAuthInterceptor implements HandlerInterceptor {
 
@@ -18,13 +17,17 @@ public class SessionAuthInterceptor implements HandlerInterceptor {
 
         String path = request.getRequestURI();
 
+
         if (
                 path.startsWith("/api/auth") ||
-                        path.startsWith("/swagger") ||
-                        path.startsWith("/v3/api-docs")
+                        path.startsWith("/api/public") ||
+                        path.startsWith("/swagger-ui") ||
+                        path.startsWith("/v3/api-docs") ||
+                        path.startsWith("/uploads")
         ) {
             return true;
         }
+
         HttpSession session = request.getSession(false);
 
         if (session == null || session.getAttribute("USER_ID") == null) {
