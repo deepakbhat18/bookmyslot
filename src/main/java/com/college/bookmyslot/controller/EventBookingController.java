@@ -12,7 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/events/bookings")
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 public class EventBookingController {
 
     private final EventBookingService eventBookingService;

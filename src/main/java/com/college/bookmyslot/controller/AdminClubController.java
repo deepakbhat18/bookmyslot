@@ -20,7 +20,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/clubs")
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 public class AdminClubController {
 
     private final ClubRepository clubRepository;

@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/events/checkin")
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 public class EventCheckInController {
 
     private final EventCheckInService checkInService;

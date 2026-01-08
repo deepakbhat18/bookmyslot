@@ -14,7 +14,7 @@ import java.nio.file.*;
 
 @RestController
 @RequestMapping("/api/events")
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 public class EventController {
 
     private final EventService eventService;

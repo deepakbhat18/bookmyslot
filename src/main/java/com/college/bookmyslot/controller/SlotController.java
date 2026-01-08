@@ -17,7 +17,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/slots")
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 public class SlotController {
 
     private final TeacherSlotRepository slotRepository;

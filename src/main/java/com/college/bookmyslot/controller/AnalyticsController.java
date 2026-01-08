@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin/analytics")
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 public class AnalyticsController {
 
     private final UserRepository userRepository;

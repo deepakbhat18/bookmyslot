@@ -16,7 +16,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/calendar")
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 public class CalendarController {
 
     private final TeacherSlotRepository slotRepository;

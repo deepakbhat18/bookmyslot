@@ -14,7 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/event-analytics")
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 public class EventAnalyticsController {
 
     private final EventRepository eventRepository;
