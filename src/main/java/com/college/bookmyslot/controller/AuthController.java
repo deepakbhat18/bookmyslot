@@ -67,7 +67,7 @@ public class AuthController {
         String otp = String.valueOf(100000 + new Random().nextInt(900000));
         user.setOtp(otp);
         user.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
-        user.setVerified(false);
+        user.setVerified(true);
 
         userRepository.save(user);
 

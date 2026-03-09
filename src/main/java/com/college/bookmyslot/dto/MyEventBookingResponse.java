@@ -14,5 +14,7 @@ public class MyEventBookingResponse {
     private String bookingDate;
     private String bookingStatus;
     private String refundStatus;
+    private String ticketId;
+    private String qrCodeUrl;
 
 }

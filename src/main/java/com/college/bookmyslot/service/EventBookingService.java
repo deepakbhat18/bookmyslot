@@ -479,33 +479,66 @@ if(event.getStatus() != Event.Status.PUBLISHED){
     }
 
 
-    private MyEventBookingResponse mapToMyBookingResponse(EventBooking booking) {
+//    private MyEventBookingResponse mapToMyBookingResponse(EventBooking booking) {
+//
+//        Event event = booking.getEvent();
+//
+//        MyEventBookingResponse dto = new MyEventBookingResponse();
+//
+//        dto.setBookingId(booking.getId());
+//        dto.setEventTitle(event.getTitle());
+//        dto.setVenue(event.getVenue());
+//        dto.setEventDate(event.getEventDate().toString());
+//        dto.setEventTime(event.getStartTime() + " - " + event.getEndTime());
+//        dto.setBookingDate(
+//                booking.getBookedAt().toLocalDate().toString()
+//        );
+//
+//        dto.setBookingStatus(
+//                booking.getBookingStatus().name()
+//        );
+//
+//        dto.setRefundStatus(
+//                booking.getRefundStatus() != null
+//                        ? booking.getRefundStatus().name()
+//                        : "NOT_APPLICABLE"
+//        );
+//
+//        return dto;
+//    }
+private MyEventBookingResponse mapToMyBookingResponse(EventBooking booking) {
 
-        Event event = booking.getEvent();
+    Event event = booking.getEvent();
 
-        MyEventBookingResponse dto = new MyEventBookingResponse();
+    MyEventBookingResponse dto = new MyEventBookingResponse();
 
-        dto.setBookingId(booking.getId());
-        dto.setEventTitle(event.getTitle());
-        dto.setVenue(event.getVenue());
-        dto.setEventDate(event.getEventDate().toString());
-        dto.setEventTime(event.getStartTime() + " - " + event.getEndTime());
-        dto.setBookingDate(
-                booking.getBookedAt().toLocalDate().toString()
+    dto.setBookingId(booking.getId());
+    dto.setEventTitle(event.getTitle());
+    dto.setVenue(event.getVenue());
+    dto.setEventDate(event.getEventDate().toString());
+    dto.setEventTime(event.getStartTime() + " - " + event.getEndTime());
+    dto.setBookingDate(booking.getBookedAt().toLocalDate().toString());
+    dto.setBookingStatus(booking.getBookingStatus().name());
+    dto.setRefundStatus(
+            booking.getRefundStatus() != null
+                    ? booking.getRefundStatus().name()
+                    : "NOT_APPLICABLE"
+    );
+
+    // ── NEW: expose ticketId and QR code so student's "My Tickets" page
+    //         can render the QR without making an extra API call ──
+    dto.setTicketId(booking.getTicketId());
+
+    if (booking.getTicketId() != null) {
+        String qrPayload = "ticketId=" + booking.getTicketId()
+                + "&eventId=" + event.getId();
+        dto.setQrCodeUrl(
+                "data:image/png;base64," + QRCodeUtil.generateQRCode(qrPayload)
         );
-
-        dto.setBookingStatus(
-                booking.getBookingStatus().name()
-        );
-
-        dto.setRefundStatus(
-                booking.getRefundStatus() != null
-                        ? booking.getRefundStatus().name()
-                        : "NOT_APPLICABLE"
-        );
-
-        return dto;
     }
+
+    return dto;
+}
 
 
 }

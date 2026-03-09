@@ -198,4 +198,30 @@ public class EmailService {
         System.err.println("❌ Email failed after retries: " + ex.getMessage());
 
     }
+    @Async
+    public void sendClubStaffCreatedEmail(
+            String to,
+            String name,
+            String clubName,
+            String password
+    ) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(to);
+        message.setSubject("Club Staff Account Created - BookMySlot");
+
+        message.setText(
+                "Hi " + name + ",\n\n" +
+                        "You have been added as a Club Staff for:\n" +
+                        "Club: " + clubName + "\n\n" +
+                        "Login credentials:\n" +
+                        "Email: " + to + "\n" +
+                        "Temporary Password: " + password + "\n\n" +
+                        "Please login and reset your password immediately.\n\n" +
+                        "Regards,\nBookMySlot Team"
+        );
+
+        mailSender.send(message);
+    }
+
 }
