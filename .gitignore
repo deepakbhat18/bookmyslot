@@ -32,4 +32,7 @@ build/
 ### VS Code ###
 .vscode/
 
-application*.properties
+target/
+.env
+*.log
+.env
