@@ -26,13 +26,25 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(sessionAuthInterceptor)
                 .addPathPatterns("/api/**");
     }
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
+//    @Override
+//    public void addCorsMappings(CorsRegistry registry) {
+//
+//        registry.addMapping("/**")
+//                .allowedOrigins("http://localhost:5173") // 👈 frontend
+//                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+//                .allowedHeaders("*")
+//                .allowCredentials(true);
+//    }
+@Override
+public void addCorsMappings(CorsRegistry registry) {
 
-        registry.addMapping("/**")
-                .allowedOrigins("http://localhost:5173") // 👈 frontend
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(true);
-    }
+    registry.addMapping("/**")
+            .allowedOrigins(
+                    "http://localhost:5173",
+                    "https://bookmyslot.vercel.app"
+            )
+            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+            .allowedHeaders("*")
+            .allowCredentials(true);
+}
 }
