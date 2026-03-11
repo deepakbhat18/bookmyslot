@@ -34,8 +34,15 @@ public class AuthController {
     @PostMapping("/register")
     public ApiResponse<String> register(@RequestBody RegisterRequest request) {
 
+//        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+//            throw new RuntimeException("Email already registered");
+//        }
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already registered");
+            return new ApiResponse<>(
+                    false,
+                    "Email already registered",
+                    null
+            );
         }
 
         User.Role role;
@@ -67,7 +74,7 @@ public class AuthController {
         String otp = String.valueOf(100000 + new Random().nextInt(900000));
         user.setOtp(otp);
         user.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
-        user.setVerified(true);
+        user.setVerified(false);
 
         userRepository.save(user);
 
