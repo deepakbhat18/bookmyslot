@@ -194,9 +194,9 @@ public class EmailService {
         mailSender.send(message);
     }
     @Recover
-    public void recover(Exception ex, Object... args) {
-        System.err.println("❌ Email failed after retries: " + ex.getMessage());
-
+    public void recover(Exception ex, String to, String name, String otp, String purpose) {
+        System.err.println("Email permanently failed for: " + to);
+        ex.printStackTrace();
     }
     @Async
     public void sendClubStaffCreatedEmail(

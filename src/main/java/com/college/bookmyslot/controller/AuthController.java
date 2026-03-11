@@ -104,7 +104,7 @@ public ApiResponse<String> verifyOtp(@RequestBody OtpVerifyRequest request) {
         throw new RuntimeException("Invalid or expired OTP");
     }
 
-    user.setVerified(true);
+    user.setVerified(true);//afterwards change this
     user.setOtp(null);
     user.setOtpExpiry(null);
     userRepository.save(user);
