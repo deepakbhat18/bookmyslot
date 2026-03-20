@@ -395,6 +395,12 @@ docker run -p 8080:8080 --env-file .env bookmyslot:latest
 - API base: `http://localhost:8080/api`
 
 ---
+## Related Repositories
+
+| Layer | Repository |
+|---|---|
+| Frontend | [bookmyslot-frontend](https://github.com/deepakbhat18/bookmyslot_frontend.git) — React, Vite, Recharts |
+
 ## 🎓 About This Project
 
 
