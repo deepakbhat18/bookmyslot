@@ -54,7 +54,6 @@ public class SessionAuthInterceptor implements HandlerInterceptor {
 
         // ✅ ALLOW PREFLIGHT REQUESTS
         if ("OPTIONS".equalsIgnoreCase(method)) {
-            response.setStatus(HttpServletResponse.SC_OK);
             return true;
         }
 
