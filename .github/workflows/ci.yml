@@ -31,7 +31,7 @@ jobs:
       - name: Build Docker image
         run: docker build -t bookmyslot-backend .
 
-            - name: Log in to Docker Hub
+      - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
