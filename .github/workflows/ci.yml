@@ -27,3 +27,6 @@ jobs:
 
       - name: Build and test
         run: mvn clean test
+
+      - name: Build Docker image
+        run: docker build -t bookmyslot-backend .
