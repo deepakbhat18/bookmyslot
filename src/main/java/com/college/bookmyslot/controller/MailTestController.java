@@ -1,9 +1,7 @@
 package com.college.bookmyslot.controller;
 
-
+import com.college.bookmyslot.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -11,18 +9,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class MailTestController {
 
     @Autowired
-    private JavaMailSender mailSender;
+    private EmailService emailService;
 
     @GetMapping("/mail-test")
     public String sendTestMail() {
 
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo("deepak.unofficial18@gmail.com");
-            message.setSubject("SMTP Test");
-            message.setText("Mail working from Render server");
-
-            mailSender.send(message);
+            emailService.sendOtpEmail(
+                    "deepak.unofficial18@gmail.com",
+                    "Test",
+                    "123456",
+                    "SMTP Test"
+            );
 
             return "Mail Sent Successfully";
 
