@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.retry.annotation.Backoff;
@@ -16,6 +15,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
@@ -23,26 +23,25 @@ import java.time.Duration;
 import java.util.Map;
 
 /**
- * Sends transactional emails via Resend's HTTPS API (POST https://api.resend.com/emails).
- * No SMTP connections are made; all delivery uses outbound HTTPS on port 443.
+ * Sends transactional emails via a Google Apps Script web-app endpoint.
+ * All delivery uses outbound HTTPS on port 443 — no SMTP connections.
  *
  * Required environment variables:
- *   RESEND_API_KEY      – Resend API key (re_...)
- *   RESEND_FROM_EMAIL   – Verified sender address configured in Resend
+ *   GMAIL_SCRIPT_URL     – Deployed Apps Script URL (https://script.google.com/macros/s/.../exec)
+ *   BOOKMYSLOT_SECRET    – Shared secret validated by the Apps Script to reject unauthorised callers
  */
 @Service
 public class EmailService {
 
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
-    private static final String RESEND_API_URL = "https://api.resend.com/emails";
 
     private final RestTemplate restTemplate;
 
-    @Value("${resend.api.key:}")
-    private String apiKey;
+    @Value("${gmail.script.url:}")
+    private String scriptUrl;
 
-    @Value("${resend.from.email:}")
-    private String fromEmail;
+    @Value("${bookmyslot.secret:}")
+    private String secret;
 
     /**
      * Primary constructor used by Spring. RestTemplateBuilder is auto-configured
@@ -66,66 +65,96 @@ public class EmailService {
     // -----------------------------------------------------------------------
 
     /**
-     * Sends a plain-text email via Resend API.
+     * POSTs a plain-text email to the configured Google Apps Script endpoint.
      *
-     * @throws IllegalStateException    if RESEND_API_KEY or RESEND_FROM_EMAIL is not configured
-     * @throws ResourceAccessException  on network / timeout errors (retryable)
-     * @throws RuntimeException         when Resend rejects the request (non-retryable for 4xx)
+     * Request body (JSON):
+     *   { "secret": "...", "to": "...", "subject": "...", "body": "..." }
+     *
+     * Expected success response:
+     *   { "success": true }
+     *
+     * @throws IllegalStateException   if GMAIL_SCRIPT_URL or BOOKMYSLOT_SECRET is not configured
+     * @throws ResourceAccessException on network / timeout errors (retried by @Retryable callers)
+     * @throws RuntimeException        when the script signals failure or returns an unexpected response
      */
     private void sendEmail(String to, String subject, String text) {
-        if (apiKey == null || apiKey.isBlank()) {
+        if (scriptUrl == null || scriptUrl.isBlank()) {
             throw new IllegalStateException(
-                    "RESEND_API_KEY is not configured. Email to " + to + " cannot be sent.");
+                    "GMAIL_SCRIPT_URL is not configured. Email cannot be sent.");
         }
-        if (fromEmail == null || fromEmail.isBlank()) {
+        if (secret == null || secret.isBlank()) {
             throw new IllegalStateException(
-                    "RESEND_FROM_EMAIL is not configured. Email to " + to + " cannot be sent.");
+                    "BOOKMYSLOT_SECRET is not configured. Email cannot be sent.");
         }
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);   // Authorization: Bearer <key>
 
-        Map<String, Object> body = Map.of(
-                "from", fromEmail,
-                "to",   new String[]{to},
+        // The 'secret' field authenticates this request to the Apps Script.
+        // Never log the secret value.
+        Map<String, String> body = Map.of(
+                "secret",  secret,
+                "to",      to,
                 "subject", subject,
-                "text", text
+                "body",    text
         );
 
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+        HttpEntity<Map<String, String>> request = new HttpEntity<>(body, headers);
 
         try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(RESEND_API_URL, request, Map.class);
+            ResponseEntity<Map> response = restTemplate.postForEntity(scriptUrl, request, Map.class);
 
             if (!response.getStatusCode().is2xxSuccessful()) {
-                // Should not reach here (RestTemplate throws on 4xx/5xx), but guard anyway
+                // Guard — RestTemplate normally throws on non-2xx, but handle defensively.
                 throw new RuntimeException(
-                        "Resend API returned unexpected status " + response.getStatusCode()
+                        "Apps Script returned HTTP " + response.getStatusCode()
                         + " for recipient " + to);
             }
-            log.info("Email sent via Resend to {}", to);
+
+            Map<?, ?> responseBody = response.getBody();
+            if (responseBody == null) {
+                throw new RuntimeException(
+                        "Apps Script returned an empty response for recipient " + to);
+            }
+
+            Object success = responseBody.get("success");
+            if (!Boolean.TRUE.equals(success)) {
+                // Apps Script returned { "success": false } or an unexpected payload.
+                // Extract an error message if present; do not log sensitive content.
+                Object errorMsg = responseBody.get("error");
+                throw new RuntimeException(
+                        "Apps Script reported failure sending to " + to
+                        + (errorMsg != null ? ": " + errorMsg : ""));
+            }
+
+            log.info("Email sent via Apps Script to {}", to);
 
         } catch (HttpClientErrorException ex) {
-            // 4xx: bad request, invalid key, unverified domain — do NOT retry
-            if (ex.getStatusCode() == HttpStatus.UNAUTHORIZED ||
-                    ex.getStatusCode() == HttpStatus.FORBIDDEN) {
-                log.error("Resend API authentication failed. Check RESEND_API_KEY.");
-            } else if (ex.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
-                log.warn("Resend rate limit hit sending to {}. Will retry.", to);
-                throw ex;   // allow @Retryable to kick in
+            // 4xx from the Apps Script host (e.g. 401 = wrong secret, 403 = forbidden)
+            if (ex.getStatusCode().value() == 401 || ex.getStatusCode().value() == 403) {
+                log.error("Apps Script rejected the request ({}). Check BOOKMYSLOT_SECRET and script permissions.",
+                        ex.getStatusCode());
+                // Auth failures should not be retried — re-throw as-is so @Retryable callers
+                // see the exception but the 4xx means no point hammering the endpoint.
             } else {
-                log.error("Resend API client error {} sending to {}: {}",
+                log.error("Apps Script HTTP client error {} for recipient {}: {}",
                         ex.getStatusCode(), to, ex.getResponseBodyAsString());
             }
-            // Re-throw so @Retryable / @Recover can handle appropriately
+            throw ex;   // propagate to @Retryable / @Recover
+
+        } catch (HttpServerErrorException ex) {
+            // 5xx — transient server error, worth retrying
+            log.warn("Apps Script HTTP server error {} for recipient {}. Will retry.",
+                    ex.getStatusCode(), to);
             throw ex;
+
         }
-        // ResourceAccessException (connect / read timeout) propagates and is retried by @Retryable
+        // ResourceAccessException (connect / read timeout) propagates automatically
+        // and is retried by the @Retryable annotation on each public method.
     }
 
     // -----------------------------------------------------------------------
-    // Public email methods — signatures unchanged
+    // Public email methods — signatures, templates, and behaviour unchanged
     // -----------------------------------------------------------------------
 
     @Async

@@ -14,14 +14,18 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
 /**
- * Unit tests for EmailService.
- * Uses MockRestServiceServer to intercept RestTemplate calls — no real HTTP traffic or emails sent.
+ * Unit tests for EmailService (Google Apps Script provider).
+ * Uses MockRestServiceServer — no real HTTP traffic, no real emails sent.
  */
 class EmailServiceTest {
 
-    private static final String FAKE_API_KEY   = "re_test_key";
-    private static final String FAKE_FROM      = "noreply@example.com";
-    private static final String RESEND_API_URL = "https://api.resend.com/emails";
+    private static final String FAKE_SCRIPT_URL = "https://script.google.com/macros/s/fake/exec";
+    private static final String FAKE_SECRET     = "test-secret-abc";
+
+    /** Apps Script success response */
+    private static final String SUCCESS_BODY = "{\"success\":true}";
+    /** Apps Script failure response */
+    private static final String FAILURE_BODY = "{\"success\":false,\"error\":\"quota exceeded\"}";
 
     private RestTemplate restTemplate;
     private MockRestServiceServer mockServer;
@@ -33,34 +37,32 @@ class EmailServiceTest {
         mockServer   = MockRestServiceServer.createServer(restTemplate);
         // Use the package-private constructor that accepts a pre-built RestTemplate
         emailService = new EmailService(restTemplate);
-        // Inject @Value fields via ReflectionTestUtils (avoids Spring context overhead)
-        ReflectionTestUtils.setField(emailService, "apiKey",    FAKE_API_KEY);
-        ReflectionTestUtils.setField(emailService, "fromEmail", FAKE_FROM);
+        // Inject @Value fields without starting a Spring context
+        ReflectionTestUtils.setField(emailService, "scriptUrl", FAKE_SCRIPT_URL);
+        ReflectionTestUtils.setField(emailService, "secret",    FAKE_SECRET);
     }
 
     // ------------------------------------------------------------------
-    // Successful delivery
+    // Successful delivery — all 7 public methods
     // ------------------------------------------------------------------
 
     @Test
-    void sendOtpEmail_success_postsToResendApi() {
-        mockServer.expect(requestTo(RESEND_API_URL))
+    void sendOtpEmail_success_postsToScriptUrl() {
+        mockServer.expect(requestTo(FAKE_SCRIPT_URL))
                 .andExpect(method(HttpMethod.POST))
-                .andExpect(header("Authorization", "Bearer " + FAKE_API_KEY))
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andRespond(withSuccess("{\"id\":\"abc123\"}", MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(SUCCESS_BODY, MediaType.APPLICATION_JSON));
 
-        // Direct call (bypasses @Async for synchronous test)
         emailService.sendOtpEmail("user@test.com", "Alice", "111111", "Login");
 
         mockServer.verify();
     }
 
     @Test
-    void sendWelcomeEmail_success_postsToResendApi() {
-        mockServer.expect(requestTo(RESEND_API_URL))
+    void sendWelcomeEmail_success_postsToScriptUrl() {
+        mockServer.expect(requestTo(FAKE_SCRIPT_URL))
                 .andExpect(method(HttpMethod.POST))
-                .andRespond(withSuccess("{\"id\":\"abc124\"}", MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(SUCCESS_BODY, MediaType.APPLICATION_JSON));
 
         emailService.sendWelcomeEmail("user@test.com", "Alice", "STUDENT", "CS21CS001");
 
@@ -68,10 +70,10 @@ class EmailServiceTest {
     }
 
     @Test
-    void sendSlotBookingEmail_success_postsToResendApi() {
-        mockServer.expect(requestTo(RESEND_API_URL))
+    void sendSlotBookingEmail_success_postsToScriptUrl() {
+        mockServer.expect(requestTo(FAKE_SCRIPT_URL))
                 .andExpect(method(HttpMethod.POST))
-                .andRespond(withSuccess("{\"id\":\"abc125\"}", MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(SUCCESS_BODY, MediaType.APPLICATION_JSON));
 
         emailService.sendSlotBookingEmail(
                 "user@test.com", "Alice", "Prof. Smith", "2026-10-15", "10:00", "11:00");
@@ -80,10 +82,10 @@ class EmailServiceTest {
     }
 
     @Test
-    void sendEventBookingEmail_success_postsToResendApi() {
-        mockServer.expect(requestTo(RESEND_API_URL))
+    void sendEventBookingEmail_success_postsToScriptUrl() {
+        mockServer.expect(requestTo(FAKE_SCRIPT_URL))
                 .andExpect(method(HttpMethod.POST))
-                .andRespond(withSuccess("{\"id\":\"abc126\"}", MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(SUCCESS_BODY, MediaType.APPLICATION_JSON));
 
         emailService.sendEventBookingEmail(
                 "user@test.com", "Alice", "Tech Fest", "Auditorium",
@@ -93,10 +95,10 @@ class EmailServiceTest {
     }
 
     @Test
-    void sendEventReminderEmail_success_postsToResendApi() {
-        mockServer.expect(requestTo(RESEND_API_URL))
+    void sendEventReminderEmail_success_postsToScriptUrl() {
+        mockServer.expect(requestTo(FAKE_SCRIPT_URL))
                 .andExpect(method(HttpMethod.POST))
-                .andRespond(withSuccess("{\"id\":\"abc127\"}", MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(SUCCESS_BODY, MediaType.APPLICATION_JSON));
 
         emailService.sendEventReminderEmail(
                 "user@test.com", "Alice", "Tech Fest", "Auditorium", "09:00 AM");
@@ -105,10 +107,10 @@ class EmailServiceTest {
     }
 
     @Test
-    void sendTeacherSlotBookedEmail_success_postsToResendApi() {
-        mockServer.expect(requestTo(RESEND_API_URL))
+    void sendTeacherSlotBookedEmail_success_postsToScriptUrl() {
+        mockServer.expect(requestTo(FAKE_SCRIPT_URL))
                 .andExpect(method(HttpMethod.POST))
-                .andRespond(withSuccess("{\"id\":\"abc128\"}", MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(SUCCESS_BODY, MediaType.APPLICATION_JSON));
 
         emailService.sendTeacherSlotBookedEmail(
                 "teacher@test.com", "Prof. Smith", "Alice",
@@ -119,10 +121,10 @@ class EmailServiceTest {
     }
 
     @Test
-    void sendClubStaffCreatedEmail_success_postsToResendApi() {
-        mockServer.expect(requestTo(RESEND_API_URL))
+    void sendClubStaffCreatedEmail_success_postsToScriptUrl() {
+        mockServer.expect(requestTo(FAKE_SCRIPT_URL))
                 .andExpect(method(HttpMethod.POST))
-                .andRespond(withSuccess("{\"id\":\"abc129\"}", MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(SUCCESS_BODY, MediaType.APPLICATION_JSON));
 
         emailService.sendClubStaffCreatedEmail(
                 "staff@test.com", "Bob", "Coding Club", "tempPass@123");
@@ -131,15 +133,31 @@ class EmailServiceTest {
     }
 
     // ------------------------------------------------------------------
-    // Provider error handling
+    // Apps Script application-level failure  { "success": false }
     // ------------------------------------------------------------------
 
     @Test
-    void sendOtpEmail_resend401_throwsHttpClientError() {
-        mockServer.expect(requestTo(RESEND_API_URL))
+    void sendOtpEmail_scriptReportsFailure_throwsRuntimeException() {
+        mockServer.expect(requestTo(FAKE_SCRIPT_URL))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess(FAILURE_BODY, MediaType.APPLICATION_JSON));
+
+        assertThatThrownBy(() ->
+                emailService.sendOtpEmail("user@test.com", "Alice", "999", "Login"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Apps Script reported failure");
+    }
+
+    // ------------------------------------------------------------------
+    // HTTP error handling
+    // ------------------------------------------------------------------
+
+    @Test
+    void sendOtpEmail_script401_throwsHttpClientError() {
+        mockServer.expect(requestTo(FAKE_SCRIPT_URL))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.UNAUTHORIZED)
-                        .body("{\"message\":\"Invalid API key\"}"));
+                        .body("{\"error\":\"wrong secret\"}"));
 
         assertThatThrownBy(() ->
                 emailService.sendOtpEmail("user@test.com", "Alice", "999", "Login"))
@@ -149,8 +167,21 @@ class EmailServiceTest {
     }
 
     @Test
-    void sendOtpEmail_resend500_throwsHttpServerError() {
-        mockServer.expect(requestTo(RESEND_API_URL))
+    void sendOtpEmail_script403_throwsHttpClientError() {
+        mockServer.expect(requestTo(FAKE_SCRIPT_URL))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.FORBIDDEN));
+
+        assertThatThrownBy(() ->
+                emailService.sendOtpEmail("user@test.com", "Alice", "999", "Login"))
+                .isInstanceOf(org.springframework.web.client.HttpClientErrorException.class);
+
+        mockServer.verify();
+    }
+
+    @Test
+    void sendOtpEmail_script500_throwsHttpServerError() {
+        mockServer.expect(requestTo(FAKE_SCRIPT_URL))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withServerError());
 
@@ -163,7 +194,7 @@ class EmailServiceTest {
 
     @Test
     void sendOtpEmail_networkTimeout_throwsResourceAccessException() {
-        mockServer.expect(requestTo(RESEND_API_URL))
+        mockServer.expect(requestTo(FAKE_SCRIPT_URL))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withException(
                         new java.net.SocketTimeoutException("Connect timed out")));
@@ -176,26 +207,26 @@ class EmailServiceTest {
     }
 
     // ------------------------------------------------------------------
-    // Missing configuration handling
+    // Missing configuration
     // ------------------------------------------------------------------
 
     @Test
-    void sendOtpEmail_missingApiKey_throwsIllegalState() {
-        ReflectionTestUtils.setField(emailService, "apiKey", "");
+    void sendOtpEmail_missingScriptUrl_throwsIllegalState() {
+        ReflectionTestUtils.setField(emailService, "scriptUrl", "");
 
         assertThatThrownBy(() ->
                 emailService.sendOtpEmail("user@test.com", "Alice", "999", "Login"))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("RESEND_API_KEY");
+                .hasMessageContaining("GMAIL_SCRIPT_URL");
     }
 
     @Test
-    void sendOtpEmail_missingFromEmail_throwsIllegalState() {
-        ReflectionTestUtils.setField(emailService, "fromEmail", "");
+    void sendOtpEmail_missingSecret_throwsIllegalState() {
+        ReflectionTestUtils.setField(emailService, "secret", "");
 
         assertThatThrownBy(() ->
                 emailService.sendOtpEmail("user@test.com", "Alice", "999", "Login"))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("RESEND_FROM_EMAIL");
+                .hasMessageContaining("BOOKMYSLOT_SECRET");
     }
 }
