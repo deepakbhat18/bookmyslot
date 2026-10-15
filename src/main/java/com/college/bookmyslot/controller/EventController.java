@@ -37,11 +37,11 @@ public class EventController {
             HttpSession session,
             @RequestBody EventCreateRequest request
     ) {
-        Long staffUserId = (Long) session.getAttribute("USER_ID");
-
-        if (staffUserId == null) {
-            throw new RuntimeException("Not logged in");
+        if (session == null || session.getAttribute("USER_ID") == null) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.UNAUTHORIZED, "Login required");
         }
+        Long staffUserId = (Long) session.getAttribute("USER_ID");
 
         return eventService.createEventByStaff(staffUserId, request);
     }

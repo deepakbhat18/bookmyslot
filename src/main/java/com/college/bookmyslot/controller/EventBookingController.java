@@ -39,11 +39,11 @@ public class EventBookingController {
             @PathVariable Long bookingId,
             HttpSession session
     ) {
-        Long userId = (Long) session.getAttribute("USER_ID");
-
-        if (userId == null) {
-            throw new RuntimeException("Login required");
+        if (session == null || session.getAttribute("USER_ID") == null) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.UNAUTHORIZED, "Login required");
         }
+        Long userId = (Long) session.getAttribute("USER_ID");
 
         eventBookingService.cancelBooking(bookingId, userId);
 
@@ -57,11 +57,11 @@ public class EventBookingController {
     public ApiResponse<List<MyEventBookingResponse>> myBookings(
             HttpSession session
     ) {
-        Long userId = (Long) session.getAttribute("USER_ID");
-
-        if (userId == null) {
-            throw new RuntimeException("Login required");
+        if (session == null || session.getAttribute("USER_ID") == null) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.UNAUTHORIZED, "Login required");
         }
+        Long userId = (Long) session.getAttribute("USER_ID");
 
         return new ApiResponse<>(
                 true,

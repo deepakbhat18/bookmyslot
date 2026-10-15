@@ -5,40 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
-//@Component
-//public class SessionAuthInterceptor implements HandlerInterceptor {
-//
-//    @Override
-//    public boolean preHandle(
-//            HttpServletRequest request,
-//            HttpServletResponse response,
-//            Object handler
-//    ) throws Exception {
-//
-//        String path = request.getRequestURI();
-//
-//
-//        if (
-//                path.startsWith("/api/auth") ||
-//                        path.startsWith("/api/public") ||
-//                        path.startsWith("/swagger-ui") ||
-//                        path.startsWith("/v3/api-docs") ||
-//                        path.startsWith("/uploads")
-//        ) {
-//            return true;
-//        }
-//
-//        HttpSession session = request.getSession(false);
-//
-//        if (session == null || session.getAttribute("USER_ID") == null) {
-//            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-//            response.getWriter().write("Login required");
-//            return false;
-//        }
-//
-//        return true;
-//    }
-//}
+
 @Component
 public class SessionAuthInterceptor implements HandlerInterceptor {
 
@@ -62,7 +29,8 @@ public class SessionAuthInterceptor implements HandlerInterceptor {
                 path.startsWith("/api/auth") ||
                         path.startsWith("/api/public") ||
                         path.startsWith("/swagger") ||
-                        path.startsWith("/v3/api-docs")
+                        path.startsWith("/v3/api-docs") ||
+                        path.startsWith("/uploads")
         ) {
             return true;
         }
@@ -71,10 +39,13 @@ public class SessionAuthInterceptor implements HandlerInterceptor {
 
         if (session == null || session.getAttribute("USER_ID") == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Login required");
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write("{\"success\":false,\"message\":\"Login required\",\"data\":null}");
             return false;
         }
 
         return true;
     }
 }
+

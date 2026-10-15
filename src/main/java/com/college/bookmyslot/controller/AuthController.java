@@ -182,9 +182,35 @@ public ApiResponse<String> verifyOtp(@RequestBody OtpVerifyRequest request) {
 
     }
     @PostMapping("/logout")
-    public ApiResponse<String> logout(HttpSession session) {
-        session.invalidate();
+    public ApiResponse<String> logout(jakarta.servlet.http.HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
         return new ApiResponse<>(true, "Logged out successfully", null);
+    }
+
+    @GetMapping("/me")
+    public ApiResponse<LoginResponse> me(HttpSession session) {
+        if (session == null || session.getAttribute("USER_ID") == null) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.UNAUTHORIZED, "Login required");
+        }
+        Long userId = (Long) session.getAttribute("USER_ID");
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.UNAUTHORIZED, "User not found"));
+
+        LoginResponse response = new LoginResponse();
+        response.setUserId(user.getId());
+        response.setName(user.getName());
+        response.setEmail(user.getEmail());
+        response.setRole(user.getRole().name());
+        response.setUsn(user.getUsn());
+        if (user.getClub() != null) {
+            response.setClubId(user.getClub().getId());
+        }
+        return new ApiResponse<>(true, "Session valid", response);
     }
 
     @PutMapping("/users/{id}/deactivate")
