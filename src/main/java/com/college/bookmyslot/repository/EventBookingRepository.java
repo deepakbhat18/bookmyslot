@@ -53,4 +53,13 @@ WHERE eb.student = :student
             @Param("endTime") LocalTime endTime
     );
 
+    @Query("""
+        SELECT eb FROM EventBooking eb
+        JOIN FETCH eb.student s
+        JOIN FETCH eb.event e
+        JOIN FETCH e.club c
+        WHERE e.id = :eventId
+        ORDER BY eb.bookedAt DESC
+    """)
+    List<EventBooking> findByEventIdWithStudentAndEvent(@Param("eventId") Long eventId);
 }
